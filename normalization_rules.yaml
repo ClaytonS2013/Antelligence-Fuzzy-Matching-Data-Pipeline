@@ -1,0 +1,55 @@
+# Normalization rules for dedupe pipeline.
+substitutions:
+  # secondary unit designators and common abbreviations
+  apt: apartment
+  bsmt: basement
+  bldg: building
+  dept: department
+  fl: floor
+  frnt: front
+  lbby: lobby
+  lowr: lower
+  ofc: office
+  ph: penthouse
+  rm: room
+  ste: suite
+  trlr: trailer
+  unit: unit
+  # directional prefixes/suffixes
+  n: north
+  s: south
+  e: east
+  w: west
+  ne: northeast
+  nw: northwest
+  se: southeast
+  sw: southwest
+  # street suffixes
+  ave: avenue
+  blvd: boulevard
+  cir: circle
+  cors: corners
+  ct: court
+  dr: drive
+  ext: extension
+  jct: junction
+  ln: lane
+  mtn: mountain
+  pkwy: parkway
+  pike: pike
+  pt: point
+  rd: road
+  rte: route
+  sq: square
+  st: street
+  trl: trail
+  tunl: tunnel
+  tpke: turnpike
+  vly: valley
+  vw: view
+  hwy: highway
+  ctr: center
+patterns:
+  remove_punctuation: "[\\p{Punct}]"
+  phone_non_digits: "[^0-9]"
+  zip_non_digits: "[^0-9]"
