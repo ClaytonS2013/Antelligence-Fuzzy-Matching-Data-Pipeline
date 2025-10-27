@@ -2,6 +2,8 @@ import os
 import yaml
 import re
 import pandas as pd
+from datetime import datetime
+from ingestion import get_last_run_time, update_last_run_time, fetch_practice_records
 
 
 def load_normalization_rules(path="normalization_rules.yaml"):
@@ -51,6 +53,41 @@ def create_match_keys(df, rules):
 
 
 def main():
+        # Incremental ingestion from Supabase
+    print("Pipeline starting...")
+    SUPABASE_URL = os.environ.get("SUPABASE_URL")
+    SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+
+    # Load normalization rules
+    try:
+        rules = load_normalization_rules("normalization_rules.yaml")
+    except FileNotFoundError as e:
+        print(str(e))
+        rules = {"substitutions": {}}
+
+    # Read last run time from log
+    last_run_time = get_last_run_time()
+
+    # Fetch new practice records
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        print("Warning: Missing SUPABASE_URL or SUPABASE_KEY")
+        data_df = pd.DataFrame()
+    else:
+        print(f"Connected to Supabase at: {SUPABASE_URL}")
+        data_df = fetch_practice_records(SUPABASE_URL, SUPABASE_KEY, last_run_time)
+
+    # Process records if any
+    if not data_df.empty:
+        data_df = create_match_keys(data_df, rules)
+        print(data_df[["name", "exact_key", "loose_key"]].head())
+    else:
+        print("No new records to process.")
+
+    # Update last run time log
+    update_last_run_time(datetime.utcnow().isoformat())
+    print("Pipeline completed.")
+    return
+
     print("Pipeline starting…")
     # Example environment variables for Supabase; adjust if using other sources
     SUPABASE_URL = os.environ.get("SUPABASE_URL")
