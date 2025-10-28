@@ -1,36 +1,43 @@
-name: Run pipeline
+name: Dedupe Pipeline
 
 on:
+  workflow_dispatch:
+    # Allows manual triggering in GitHub's Actions tab
   schedule:
-    # every day at 2:15am UTC (change as needed)
-    - cron: "15 2 * * *"
-  workflow_dispatch:  # lets you run it manually from the Actions tab
+    # Optional: run every hour; adjust as needed
+    - cron: '0 * * * *'
 
 jobs:
-  run:
+  dedupe:
     runs-on: ubuntu-latest
+    env:
+      # Supabase credentials are pulled from repository secrets
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      # Zapier webhook for notifying pipeline completion or triggering outbound Zap
+      ZAPIER_WEBHOOK_URL: ${{ secrets.ZAPIER_WEBHOOK_URL }}
     steps:
-      - name: Check out code
-        uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: '3.10'
 
       - name: Install dependencies
         run: |
+          # Upgrade pip and install project dependencies if they exist
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f pyproject.toml ]; then pip install 
-                             pip install pyyaml
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+          if [ -f pyproject.toml ]; then
+            pip install -e .
+          fi
+          # Install PyYAML explicitly for the dedupe script
+          pip install pyyaml
 
-      - name: Run pipeline
-        env:
-              SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-      ZAPIER_WEBHOOK_URL: ${{ secrets.ZAPIER_WEBHOOK_URL }}
-         # SMTP_PASS:     ${{ secrets.SMTP_PASS }}
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      - name: Run dedupe pipeline
         run: |
           python dedupe_pipeline.py
