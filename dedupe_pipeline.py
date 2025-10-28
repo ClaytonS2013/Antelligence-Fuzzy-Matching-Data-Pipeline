@@ -38,15 +38,54 @@ def normalize_text(text, rules):
 def create_match_keys(df, rules):
     """
     Given a DataFrame with columns 'name', 'address', 'city' and 'zip',
-    compute deterministic keys for exact and loose matching.
-    Returns the DataFrame with additional columns.
-    """
-    df = df.copy()
+    ##df["name_norm"] = df["name"].apply(lambda x: normalize_text(x, rules))
+    #df["address_norm"] = df["address"].apply(lambda x: normalize_text(x, rules))
+    #df["city_norm"] = df["city"].apply(lambda x: normalize_text(x, rules))
+    ## ensure zip is a string and stripped
+   
+        # Map column names to lowercase for easy lookup
+    lower_cols = {c.lower(): c for c in df.columns}
+
+    # Define possible synonyms for the expected columns
+    synonyms = {
+        "name": [
+            "name",
+            "practice_name", "practice name",
+            "full_name", "full name",
+            "business_name", "business name",
+            "company_name", "company name",
+        ],
+        "address": [
+            "address", "address1", "address_1",
+            "practice_address", "street", "street_address",
+        ],
+        "city": [
+            "city", "town", "practice_city", "city_name",
+        ],
+        "zip": [
+            "zip", "zipcode", "postal", "postal_code",
+            "zip_code", "postalcode", "postal code", "practice_zip",
+        ],
+    }
+
+    # Populate the standard columns using the first matching synonym
+    for std_col, syns in synonyms.items():
+        if std_col in df.columns:
+            continue
+        for syn in syns:
+            if syn.lower() in lower_cols:
+                df[std_col] = df[lower_cols[syn.lower()]]
+                break
+        # If still missing, add an empty column so downstream code doesn’t error
+        if std_col not in df.columns:
+            df[std_col] = ""
+
+
+    # Normalize each field using the standard columns
     df["name_norm"] = df["name"].apply(lambda x: normalize_text(x, rules))
     df["address_norm"] = df["address"].apply(lambda x: normalize_text(x, rules))
     df["city_norm"] = df["city"].apply(lambda x: normalize_text(x, rules))
-    # ensure zip is a string and stripped
-    df["zip_norm"] = df["zip"].astype(str).str.strip()
+df["zip_norm"] = df["zip"].astype(str).str.strip()
     df["exact_key"] = df["name_norm"] + "|" + df["address_norm"] + "|" + df["zip_norm"]
     df["loose_key"] = df["name_norm"] + "|" + df["city_norm"]
     return df
