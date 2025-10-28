@@ -13,6 +13,7 @@ jobs:
     env:
       # Supabase credentials are pulled from repository secrets
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
       SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
       # Zapier webhook for notifying pipeline completion or triggering outbound Zap
       ZAPIER_WEBHOOK_URL: ${{ secrets.ZAPIER_WEBHOOK_URL }}
